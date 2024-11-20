@@ -34,7 +34,7 @@ const Files = () => {
           'Content-Type': 'multipart/form-data',
         },
       });
-      console.log(response.data);
+      setFileList((files) => [...files, response.data.file])
       message.success(`${file.name} uploaded successfully.`);
     } catch {
       message.error('Videos and images are the only file types allowed.')
@@ -94,6 +94,12 @@ const Files = () => {
       render: (tags) => tags.join(', '), // Display tags as comma-separated values
     },
     {
+      title: 'Views',
+      dataIndex: 'views',
+      key: 'views',
+      render: (views) => views,
+    },
+    {
       title: 'Action',
       key: 'action',
       render: (_, record) => (
@@ -123,6 +129,7 @@ const Files = () => {
         multiple
         beforeUpload={handleUpload}
         showUploadList={false}
+        customRequest={() => {}}
         style={{ marginBottom: '2rem' }}
       >
         <p className="ant-upload-drag-icon">
