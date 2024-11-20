@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Upload, Button, Table, message, Modal, Input } from 'antd';
+import { Upload, Button, Table, message, Modal, Input, Progress } from 'antd';
 import { InboxOutlined, EditOutlined } from '@ant-design/icons';
 import API from '../utils/api';
 const { Dragger } = Upload;
@@ -34,7 +34,7 @@ const Files = () => {
   const [isModalVisible, setIsModalVisible] = useState(false); // Modal visibility state
   const [editingFile, setEditingFile] = useState(null); // The file being edited
   const [tags, setTags] = useState(''); // Tags input state
-
+  const [progress, setProgress] = useState(0)
   useEffect(() => {
     const fetchFiles = async () => {
       const { data, status } = await API.get('/api/files');
@@ -46,9 +46,14 @@ const Files = () => {
     fetchFiles();
   }, []);
 
+  useEffect(() => {
+    if (progress >= 100) {
+      setProgress(0)
+    }
+  }, [progress])
+
   // Dummy API calls for file upload
-  const handleUpload = async (file) => {
- 
+  const handleUpload = async ({ file }) => {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -57,6 +62,10 @@ const Files = () => {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        onUploadProgress: (progress) => {
+          const percent = (Math.round(progress.loaded * 100) / file.size);
+          setProgress(parseInt(percent))
+        }
       });
       setFileList((files) => [...files, response.data.file])
       message.success(`${file.name} uploaded successfully.`);
@@ -93,6 +102,8 @@ const Files = () => {
       message.error('Failed to update file tags.');
     }
   };
+
+  console.log(progress)
 
   const getShareableLink = async (filename) => {
     try {
@@ -151,16 +162,16 @@ const Files = () => {
       <Dragger
         name="file"
         multiple
-        beforeUpload={handleUpload}
         showUploadList={false}
-        customRequest={() => {}}
+        customRequest={handleUpload}
         style={{ marginBottom: '2rem' }}
       >
         <p className="ant-upload-drag-icon">
           <InboxOutlined />
         </p>
         <p className="ant-upload-text">Click or drag file to this area to upload</p>
-        <p className="ant-upload-hint">Support for a single or bulk upload.</p>
+        <p className="ant-upload-hint">Support for a single upload.</p>
+        {progress > 0 && <Progress percent={progress}/>}
       </Dragger>
 
       <Table dataSource={fileList} columns={columns} rowKey={(row) => row._id} />
